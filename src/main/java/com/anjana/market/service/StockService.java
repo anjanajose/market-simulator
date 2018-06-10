@@ -2,16 +2,22 @@ package com.anjana.market.service;
 
 import com.anjana.market.model.Slide;
 import com.anjana.market.model.Stock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 /**
- *
+ * Service class to handle the stock orders
  *
  */
+@Service
 public class StockService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StockService.class);
 
+    //buys ordered by highest price at the top
     private Set<Stock> buys = new TreeSet<>((s1, s2) -> {
         if (s1.getStockUUID() == s2.getStockUUID())
             return 0;
@@ -22,6 +28,7 @@ public class StockService {
         return -1;
     });
 
+    //sells ordered by lowest price at the top
     private Set<Stock> sells = new TreeSet<>((s1, s2) -> {
         if (s1.getStockUUID() == s2.getStockUUID())
             return 0;
@@ -33,9 +40,12 @@ public class StockService {
     });
 
     /**
+     * Processing based on the slide - buy or sell
+     *
      * @param stock
      */
     public void processStockOrder(Stock stock) {
+        LOGGER.info("processStockOrder: "+stock);
         if (Slide.BUY.getAction().equalsIgnoreCase(stock.getSlide()))
             processBuy(stock);
         else
@@ -45,6 +55,8 @@ public class StockService {
     }
 
     /**
+     * processing buy
+     *
      * @param stock
      */
     private void processBuy(Stock stock) {
@@ -55,6 +67,8 @@ public class StockService {
     }
 
     /**
+     * processing sell
+     *
      * @param stock
      */
     private void processSell(Stock stock) {
@@ -63,21 +77,29 @@ public class StockService {
     }
 
     /**
+     * Trade based on available quantity/price
+     *
      * @param stock
      */
     private void trade(Stock stock) {
         long quantity = stock.getQuantity();
+        System.out.println();
 
         Iterator<Stock> iter = buys.iterator();
         while (iter.hasNext()) {
             Stock s = iter.next();
             if (quantity > 0 && stock.getPrice() <= s.getPrice()) {
+                //If the buy quantity is less than the sell quantity,
+                //trade the total in the buy quantity.
+                // Trade the whole sell quantity
                 long traded = quantity;
                 if (s.getQuantity() < quantity)
                     traded = s.getQuantity();
 
+                //Printing traded quantity as of now
                 System.out.println(traded + "@" + s.getPrice());
 
+                //resetting the buy quantity
                 if (quantity >= s.getQuantity())
                     iter.remove();
                 else
@@ -87,6 +109,7 @@ public class StockService {
             }
         }
 
+        //resetting the sell quantity
         if (quantity <= 0)
             sells.remove(stock);
         else
@@ -94,11 +117,12 @@ public class StockService {
     }
 
     /**
-     *
+     *Printing the Stock Book
      *
      */
     private void print() {
-        System.out.printf("\n%-20s %-20s %s\n", "Buy", "|", "Sell");
+        System.out.println("--------------------------------------");
+        System.out.printf("%-15s %-5s %s\n\n", "Buy", "|", "Sell");
 
         Map<String, Stock> buyMap = getStockForDisplay(buys);
         Map<String, Stock> sellMap = getStockForDisplay(sells);
@@ -110,24 +134,27 @@ public class StockService {
             Stock buy = buyMap.get(buyIter.next());
             Stock sell = sellMap.get(sellIter.next());
 
-            System.out.printf("%-20s %-20s %s\n", buy.getQuantity() + "@" + buy.getPrice(), "|", sell.getQuantity() + "@" + sell.getPrice());
+            System.out.printf("%-15s %-5s %s\n", buy.getQuantity() + "@" + buy.getPrice(), "|", sell.getQuantity() + "@" + sell.getPrice());
 
         }
 
         while (buyIter.hasNext()) {
             Stock buy = buyMap.get(buyIter.next());
 
-            System.out.printf("%-20s %-20s\n", buy.getQuantity() + "@" + buy.getPrice(), "|");
+            System.out.printf("%-15s %-5s\n", buy.getQuantity() + "@" + buy.getPrice(), "|");
         }
 
         while (sellIter.hasNext()) {
             Stock sell = sellMap.get(sellIter.next());
 
-            System.out.printf("%-20s %-20s %s\n", "", "|", sell.getQuantity() + "@" + sell.getPrice());
+            System.out.printf("%-15s %-5s %s\n", "", "|", sell.getQuantity() + "@" + sell.getPrice());
         }
+        System.out.println("--------------------------------------");
     }
 
     /**
+     * Getting the stock book
+     *
      * @param set
      * @return
      */
@@ -135,6 +162,7 @@ public class StockService {
         Map<String, Stock> map = new LinkedHashMap<>();
         for (Stock stock : set) {
             String key = String.valueOf(stock.getPrice());
+            //if the same price exists, the quantity is combined together
             if (map.get(key) != null) {
                 Stock t = map.get(key);
                 t.setQuantity(t.getQuantity() + stock.getQuantity());

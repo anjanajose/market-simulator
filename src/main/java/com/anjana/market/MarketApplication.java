@@ -2,6 +2,9 @@ package com.anjana.market;
 
 import com.anjana.market.model.Stock;
 import com.anjana.market.service.StockService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,12 +18,19 @@ import java.util.stream.Stream;
 @SpringBootApplication
 public class MarketApplication implements CommandLineRunner {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarketApplication.class);
+
+    @Autowired
+    private StockService stockService;
+
     public static void main(String[] args) {
-        SpringApplication.run(MarketApplication.class, args);
+        SpringApplication app = new SpringApplication(MarketApplication.class);
+        app.run(args);
     }
 
 
     /**
+     * For taking the command line input
      *
      * @param args
      * @throws Exception
@@ -28,39 +38,48 @@ public class MarketApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        Scanner keys = new Scanner(System.in);
-        String order = "";
-        StockService stockService = new StockService();
-        System.out.println("Format for inbound order: <S|B> <quantity> <price>. Type 'exit' to stop.");
-        while (true) {
-            order = keys.nextLine();
+        Scanner keys = null;
+        try {
+            keys = new Scanner(System.in);
+            String order = "";
 
-            if ("exit".equalsIgnoreCase(order)) {
-                System.out.println("Thank you!");
-                System.exit(1);
+            System.out.println("Format for inbound order: <S|B> <quantity> <price>. Type 'exit' to stop.");
+            while (true) {
+                order = keys.nextLine();
+                if ("exit".equalsIgnoreCase(order)) {
+                    System.out.println("Thank you!");
+                    System.exit(0);
+                }
+
+                List<String> orderList = Stream.of(order.split(" "))
+                        .map(elem -> new String(elem))
+                        .collect(Collectors.toList());
+
+                if (orderList.size() < 3) {
+                    System.out.println("All required values are not available! Format is <S|B> <quantity> <price>");
+                    continue;
+                }
+
+                Stock stock = new Stock();
+                stock.setInbound(orderList);
+
+                String msg = stock.getErrors();
+                if (msg == null || msg.length() <= 0) {
+                    stockService.processStockOrder(stock);
+                } else {
+                    System.out.println(msg);
+                }
+
             }
-
-            List<String> orderList = Stream.of(order.split(" "))
-                    .map(elem -> new String(elem))
-                    .collect(Collectors.toList());
-
-            if (orderList.size() < 3) {
-                System.out.println("All required values are not available! Format is <S|B> <quantity> <price>");
-            }
-
-            Stock stock = new Stock();
-            stock.setInbound(orderList);
-
-            String msg = stock.getErrors();
-            if (msg == null || msg.length() <= 0) {
-                stockService.processStockOrder(stock);
-            } else {
-                System.out.println(msg);
-            }
-
+        }catch (Exception e)
+        {
+            LOGGER.error(e.getMessage());
+            throw new Exception(e);
+        }
+        finally {
+            if(keys != null)
+                keys.close();
         }
 
     }
-
-
 }
