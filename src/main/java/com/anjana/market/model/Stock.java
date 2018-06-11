@@ -1,5 +1,5 @@
 package com.anjana.market.model;
-
+import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.UUID;
 
@@ -105,17 +105,19 @@ public class Stock {
             msg.append("B for Buy and S for Sell are the valid values for slide!").append("\n");
         }
 
-        if (getQuantity() <= 0)
+        if (getQuantity() <= 0) {
             msg.append("Quantity should be a value greater than zero!").append("\n");
+        }
 
-        if (getPrice() <= 0)
+        if (getPrice() <= 0) {
             msg.append("Price should be greater than zero!").append("\n");
+        }
 
         String priceStr = String.valueOf(getPrice());
-        if (priceStr != null) {
+        if (!StringUtils.isEmpty(priceStr)) {
             String decimal = priceStr.substring(priceStr.indexOf(".") + 1);
             if (decimal.length() > 3)
-                msg.append("Please entry price up to 3 decimal places!").append("\n");
+                msg.append("Please enter price up to 3 decimal places!").append("\n");
         }
 
 

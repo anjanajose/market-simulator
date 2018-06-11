@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Scanner;
@@ -30,13 +32,13 @@ public class MarketApplication implements CommandLineRunner {
 
 
     /**
-     * For taking the command line input
+     * Read and process inputs
      *
      * @param args
      * @throws Exception
      */
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
 
         Scanner keys = null;
         try {
@@ -51,7 +53,7 @@ public class MarketApplication implements CommandLineRunner {
                     System.exit(0);
                 }
 
-                List<String> orderList = Stream.of(order.split(" "))
+                List<String> orderList = Stream.of(order.split("\\s+"))
                         .map(elem -> new String(elem))
                         .collect(Collectors.toList());
 
@@ -64,7 +66,7 @@ public class MarketApplication implements CommandLineRunner {
                 stock.setInbound(orderList);
 
                 String msg = stock.getErrors();
-                if (msg == null || msg.length() <= 0) {
+                if (StringUtils.isEmpty(msg)) {
                     stockService.processStockOrder(stock);
                 } else {
                     System.out.println(msg);
@@ -74,10 +76,9 @@ public class MarketApplication implements CommandLineRunner {
         }catch (Exception e)
         {
             LOGGER.error(e.getMessage());
-            throw new Exception(e);
         }
         finally {
-            if(keys != null)
+            if(!ObjectUtils.isEmpty(keys))
                 keys.close();
         }
 

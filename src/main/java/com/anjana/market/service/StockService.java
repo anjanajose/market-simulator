@@ -5,6 +5,7 @@ import com.anjana.market.model.Stock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 
@@ -19,39 +20,43 @@ public class StockService {
 
     //buys ordered by highest price at the top
     private Set<Stock> buys = new TreeSet<>((s1, s2) -> {
-        if (s1.getStockUUID() == s2.getStockUUID())
+        if (s1.getStockUUID() == s2.getStockUUID()) {
             return 0;
+        }
 
-        if (s1.getPrice() < s2.getPrice() || (s1.getPrice() == s2.getPrice() && s1.getTime() > s2.getTime()))
+        if (s1.getPrice() < s2.getPrice() || (s1.getPrice() == s2.getPrice() && s1.getTime() > s2.getTime())) {
             return 1;
+        }
 
         return -1;
     });
 
     //sells ordered by lowest price at the top
     private Set<Stock> sells = new TreeSet<>((s1, s2) -> {
-        if (s1.getStockUUID() == s2.getStockUUID())
+        if (s1.getStockUUID() == s2.getStockUUID()) {
             return 0;
+        }
 
-        if (s1.getPrice() > s2.getPrice() || (s1.getPrice() == s2.getPrice() && s1.getTime() > s2.getTime()))
+        if (s1.getPrice() > s2.getPrice() || (s1.getPrice() == s2.getPrice() && s1.getTime() > s2.getTime())) {
             return 1;
+        }
 
         return -1;
     });
 
     /**
-     * Processing based on the slide - buy or sell
+     * Processing based on the slide -> buy or sell
      *
      * @param stock
      */
     public void processStockOrder(Stock stock) {
-        LOGGER.info("processStockOrder: "+stock);
-        if (Slide.BUY.getAction().equalsIgnoreCase(stock.getSlide()))
+        LOGGER.info("processStockOrder", stock);
+        if (Slide.BUY.getAction().equalsIgnoreCase(stock.getSlide())) {
             processBuy(stock);
-        else
+        } else {
             processSell(stock);
+        }
         print();
-
     }
 
     /**
@@ -83,41 +88,43 @@ public class StockService {
      */
     private void trade(Stock stock) {
         long quantity = stock.getQuantity();
-        System.out.println();
 
         Iterator<Stock> iter = buys.iterator();
         while (iter.hasNext()) {
             Stock s = iter.next();
+            //trade only if the buy price is greater than or equal to the sell price
             if (quantity > 0 && stock.getPrice() <= s.getPrice()) {
-                //If the buy quantity is less than the sell quantity,
-                //trade the total in the buy quantity.
-                // Trade the whole sell quantity
+                //if the sell quantity is greater than selected buy,
+                //then trade what is in buy quantity
+                // Else, trade the whole sell quantity
                 long traded = quantity;
-                if (s.getQuantity() < quantity)
+                if (s.getQuantity() < quantity) {
                     traded = s.getQuantity();
+                }
 
                 //Printing traded quantity as of now
                 System.out.println(traded + "@" + s.getPrice());
 
                 //resetting the buy quantity
-                if (quantity >= s.getQuantity())
+                if (quantity >= s.getQuantity()) {
                     iter.remove();
-                else
+                } else {
                     s.setQuantity(s.getQuantity() - quantity);
+                }
 
                 quantity = quantity - s.getQuantity();
             }
         }
-
         //resetting the sell quantity
-        if (quantity <= 0)
+        if (quantity <= 0) {
             sells.remove(stock);
-        else
+        } else {
             stock.setQuantity(quantity);
+        }
     }
 
     /**
-     *Printing the Stock Book
+     *Print Stock Book
      *
      */
     private void print() {
@@ -153,7 +160,7 @@ public class StockService {
     }
 
     /**
-     * Getting the stock book
+     * Get stock book
      *
      * @param set
      * @return
@@ -163,7 +170,7 @@ public class StockService {
         for (Stock stock : set) {
             String key = String.valueOf(stock.getPrice());
             //if the same price exists, the quantity is combined together
-            if (map.get(key) != null) {
+            if (!ObjectUtils.isEmpty(map.get(key))) {
                 Stock t = map.get(key);
                 t.setQuantity(t.getQuantity() + stock.getQuantity());
             } else {
