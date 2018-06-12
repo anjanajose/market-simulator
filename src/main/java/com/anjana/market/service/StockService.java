@@ -89,14 +89,12 @@ public class StockService {
     private void trade(Stock stock) {
         long quantity = stock.getQuantity();
 
-        Iterator<Stock> iter = buys.iterator();
-        while (iter.hasNext()) {
-            Stock s = iter.next();
+        Iterator<Stock> buyIterator = buys.iterator();
+        while (buyIterator.hasNext()) {
+            Stock s = buyIterator.next();
             //trade only if the buy price is greater than or equal to the sell price
             if (quantity > 0 && stock.getPrice() <= s.getPrice()) {
-                //if the sell quantity is greater than selected buy,
-                //then trade what is in buy quantity
-                // Else, trade the whole sell quantity
+               //Quantity traded can be only upto max available in the buy order
                 long traded = quantity;
                 if (s.getQuantity() < quantity) {
                     traded = s.getQuantity();
@@ -107,7 +105,7 @@ public class StockService {
 
                 //resetting the buy quantity
                 if (quantity >= s.getQuantity()) {
-                    iter.remove();
+                    buyIterator.remove();
                 } else {
                     s.setQuantity(s.getQuantity() - quantity);
                 }

@@ -3,6 +3,16 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Model object to hold each inbound order
+ *
+ * UUID is -> to each order to make it  distinct
+ * time is -> to to keep the order entered time
+ * slide -> B(buy) or S(sell)
+ * quantity -> number of sell or buy
+ * price -> Sell or Buy price
+ *
+ */
 public class Stock {
     private UUID stockUUID;
     private long time;
@@ -19,6 +29,14 @@ public class Stock {
         this.slide = stock.getSlide();
         this.quantity = stock.getQuantity();
         this.price = stock.getPrice();
+    }
+
+    public Stock(List<String> orderList) {
+        setStockUUID(UUID.randomUUID());
+        setTime(System.currentTimeMillis());
+        setSlide(orderList.get(0));
+        setQuantity(orderList.get(1));
+        setPrice(orderList.get(2));
     }
 
     public UUID getStockUUID() {
@@ -82,21 +100,9 @@ public class Stock {
     }
 
     /**
-     * Set the inbound stock order
+     * Get all errors in the inbound order
      *
-     * @param orderList
-     */
-    public void setInbound(List<String> orderList) {
-        setStockUUID(UUID.randomUUID());
-        setTime(System.currentTimeMillis());
-        setSlide(orderList.get(0));
-        setQuantity(orderList.get(1));
-        setPrice(orderList.get(2));
-    }
-
-    /**
-     *
-     * @return
+     * @return String
      */
     public String getErrors() {
         StringBuilder msg = new StringBuilder();

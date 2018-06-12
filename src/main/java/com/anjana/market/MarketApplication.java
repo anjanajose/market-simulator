@@ -62,8 +62,7 @@ public class MarketApplication implements CommandLineRunner {
                     continue;
                 }
 
-                Stock stock = new Stock();
-                stock.setInbound(orderList);
+                Stock stock = new Stock(orderList);
 
                 String msg = stock.getErrors();
                 if (StringUtils.isEmpty(msg)) {
